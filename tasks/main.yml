@@ -1,0 +1,16 @@
+---
+
+- name: Check if tenancy group already exists
+  # group labelling doesn't work properly in 3.6
+  # shell: PATH=$PATH:/usr/local/bin oc get groups -l tenancy={{ tenancy|lower|replace('_', '-') }} --token={{ ocp_token }}
+  shell:  PATH=$PATH:/usr/local/bin oc get group {{ tenancy|lower|replace('_', '-') }} --token={{ ocp_token }}
+  register: cr
+  ignore_errors: True
+  changed_when: False
+
+- debug:
+    msg: "{{ users|join(' ') }}"
+
+- name: Add users to tenancy
+  shell: PATH=$PATH:/usr/local/bin oc adm groups add-users {{ tenancy|lower|replace('_', '-') }} {{ users|join(' ') }} --token={{ ocp_token }}
+  when: "'NotFound' not in cr.stderr"
